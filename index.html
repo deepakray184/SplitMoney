@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f8f4" />
+  <title>SplitMoney — shared trip expenses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="SplitMoney home"><span class="brand-mark"><svg viewBox="0 0 32 32"><path d="M7 16.5 13.2 23 25 10"/></svg></span><span>SplitMoney</span></a>
+      <button class="user-switch"><span class="avatar avatar-you">A</span><span class="user-copy"><b>Alex Morgan</b><small>Personal space</small></span><span class="chevron">⌄</span></button>
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#overview" class="nav-item active" data-view="overview"><span class="nav-icon">◫</span>Dashboard</a>
+        <a href="#trips" class="nav-item" data-view="trips"><span class="nav-icon">⌁</span>Groups<span class="nav-count">3</span></a>
+        <a href="#activity" class="nav-item" data-view="activity"><span class="nav-icon">↗</span>All expenses</a>
+        <a href="#friends" class="nav-item" data-view="friends"><span class="nav-icon">♧</span>Friends</a>
+      </nav>
+      <div class="trips-heading"><span class="nav-label">YOUR GROUPS</span><button id="addTrip" aria-label="Add group">+</button></div>
+      <div class="trip-list">
+        <a href="#trip-coast" class="trip-link selected" data-trip="Coastal California"><span class="trip-emoji">🌊</span><span>Coastal California</span><i class="trip-dot"></i></a>
+        <a href="#trip-nyc" class="trip-link" data-trip="New York weekend"><span class="trip-emoji">🗽</span><span>New York weekend</span></a>
+        <a href="#trip-cabin" class="trip-link" data-trip="Cabin in the woods"><span class="trip-emoji">🌲</span><span>Cabin in the woods</span></a>
+      </div>
+      <div class="sidebar-bottom"><div class="invite-card"><div class="invite-art">✳</div><b>Sharing is simpler together</b><p>Add your friends to a group and keep every expense in sync.</p><button id="inviteButton">Invite friends <span>↗</span></button></div><a class="help-link" href="#help"><span>?</span> Help & feedback</a></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <b id="crumbCurrent">Overview</b></div><div class="top-actions"><button class="icon-button" id="searchButton" aria-label="Search">⌕</button><button class="icon-button notification" aria-label="Notifications">♧<i></i></button><button class="avatar avatar-you top-avatar">A</button></div></header>
+      <div class="page-wrap">
+        <section class="welcome-row"><div><div class="eyebrow"><span class="live-dot"></span> SHARED EXPENSES, MADE SIMPLE</div><h1>Hey Alex <span class="wave">✳</span></h1><p class="subtitle">Here’s your balance across groups and friends.</p></div><button class="primary-button" id="addExpenseTop"><span>＋</span> Add an expense</button></section>
+
+        <section class="summary-grid" aria-label="Your balances">
+          <article class="summary-card balance-card"><div class="card-top"><span class="summary-icon green-icon">↗</span><span class="card-kicker">YOU ARE OWED</span><button class="more-button" aria-label="More options">···</button></div><div class="money" id="owedAmount">$248<span>.50</span></div><div class="card-foot"><span class="positive-dot"></span><span>Across <b>3 trips</b> and <b>4 friends</b></span></div><div class="card-decoration deco-one"></div></article>
+          <article class="summary-card"><div class="card-top"><span class="summary-icon peach-icon">↙</span><span class="card-kicker">YOU OWE</span><button class="more-button" aria-label="More options">···</button></div><div class="money">$86<span>.25</span></div><div class="card-foot"><span class="muted-dot"></span><span>To <b>2 friends</b> across <b>2 trips</b></span></div></article>
+          <article class="summary-card trip-summary"><div class="trip-card-top"><div><span class="card-kicker">CURRENT TRIP</span><h3>Coastal California</h3><div class="trip-dates">Aug 12 – Aug 18, 2024</div></div><span class="coast-icon">🌊</span></div><div class="trip-card-bottom"><div class="avatar-stack"><span class="avatar ava-maya">M</span><span class="avatar ava-jamie">J</span><span class="avatar ava-chris">C</span><span class="avatar ava-plus">+1</span></div><span>4 people</span><a href="#trip" class="trip-open" aria-label="Open trip">↗</a></div></article>
+        </section>
+
+        <section class="content-grid">
+          <div class="activity-panel panel"><div class="panel-heading"><div><h2>Recent activity</h2><p>A little movement, a lot of memories.</p></div><button class="text-button" id="viewAll">View all <span>→</span></button></div>
+            <div class="activity-tabs"><button class="tab active" data-filter="all">All activity <span>6</span></button><button class="tab" data-filter="expenses">Expenses</button><button class="tab" data-filter="settlements">Settlements</button></div>
+            <div class="date-label">TODAY <span>•</span> AUG 16</div>
+            <div class="activity-list" id="activityList">
+              <article class="activity-row" data-kind="expenses"><div class="activity-icon restaurant">☕</div><div class="activity-detail"><b>Coffee & pastries</b><span><strong>Maya Chen</strong> paid <span class="group-tag">Coastal California</span></span></div><div class="activity-amount"><b>$38.40</b><span>You owe <em>$9.60</em></span></div><button class="row-more" aria-label="Expense options">···</button></article>
+              <article class="activity-row" data-kind="expenses"><div class="activity-icon car">⌁</div><div class="activity-detail"><b>Gas for the drive</b><span><strong>You</strong> paid <span class="group-tag">Coastal California</span></span></div><div class="activity-amount"><b>$72.00</b><span>You lent <em>$18.00</em></span></div><button class="row-more" aria-label="Expense options">···</button></article>
+              <div class="date-label older-label">YESTERDAY <span>•</span> AUG 15</div>
+              <article class="activity-row" data-kind="expenses"><div class="activity-icon home">⌂</div><div class="activity-detail"><b>Beach house groceries</b><span><strong>Jamie Lee</strong> paid <span class="group-tag">Coastal California</span></span></div><div class="activity-amount"><b>$126.84</b><span>You owe <em>$31.71</em></span></div><button class="row-more" aria-label="Expense options">···</button></article>
+              <article class="activity-row" data-kind="settlements"><div class="activity-icon settle">↗</div><div class="activity-detail"><b>Paid Jamie back</b><span><strong>You</strong> settled up <span class="group-tag">New York weekend</span></span></div><div class="activity-amount"><b>$42.00</b><span class="settled-label">Settled</span></div><button class="row-more" aria-label="Settlement options">···</button></article>
+              <article class="activity-row" data-kind="expenses"><div class="activity-icon ticket">✳</div><div class="activity-detail"><b>Big Sur park entrance</b><span><strong>Chris Park</strong> paid <span class="group-tag">Coastal California</span></span></div><div class="activity-amount"><b>$40.00</b><span>You owe <em>$10.00</em></span></div><button class="row-more" aria-label="Expense options">···</button></article>
+              <article class="activity-row" data-kind="settlements"><div class="activity-icon settle">↗</div><div class="activity-detail"><b>Maya paid you back</b><span><strong>Maya Chen</strong> settled up <span class="group-tag">Cabin in the woods</span></span></div><div class="activity-amount"><b>$24.50</b><span class="settled-label">Settled</span></div><button class="row-more" aria-label="Settlement options">···</button></article>
+              <div class="empty-state" id="emptyState">Nothing here yet.</div>
+            </div>
+            <button class="load-more" id="loadMore">You’re all caught up <span>✳</span></button>
+          </div>
+          <aside class="right-column"><section class="trip-panel panel"><div class="panel-heading compact"><div><h2>Group balances</h2><p>Coastal California</p></div><button class="more-button">···</button></div><div class="spent-row"><div><span class="card-kicker">TOTAL GROUP EXPENSES</span><div class="spent-amount">$1,284<span>.60</span></div></div><span class="spent-change">4 people</span></div><div class="group-net"><span>Your net balance</span><b>You are owed $77.70</b></div><div class="trip-divider"></div><div class="trip-balances-title"><b>Who owes whom</b><a href="#balances">See all</a></div><div class="balance-person"><span class="avatar ava-maya">M</span><span class="person-name"><b>Maya Chen</b><small>owes you</small></span><b class="person-amount positive">$64.20</b></div><div class="balance-person"><span class="avatar ava-jamie">J</span><span class="person-name"><b>Jamie Lee</b><small>you owe</small></span><b class="person-amount negative">$28.50</b></div><div class="balance-person"><span class="avatar ava-chris">C</span><span class="person-name"><b>Chris Park</b><small>owes you</small></span><b class="person-amount positive">$42.00</b></div><button class="settle-button" id="settleButton">Settle up <span>↗</span></button></section>
+          <section class="tip-card"><div class="tip-spark">✳</div><div><b>Good trips, no awkward math.</b><p>We keep a running tab so you can stay in the moment.</p></div><button aria-label="Dismiss tip" id="dismissTip">×</button></section></aside>
+        </section>
+        <footer class="page-footer"><span>Made for the memories, not the math <span class="heart">♥</span></span><span>Need a hand? <a href="#help">We’re here for you</a></span></footer>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="modalClose" aria-label="Close">×</button><div class="modal-mark">✳</div><h2 id="modalTitle">Add an expense</h2><p class="modal-subtitle">Let’s keep the trip math easy.</p><form id="expenseForm"><label>What was it for?<input name="description" placeholder="e.g. Dinner by the beach" required maxlength="60"></label><div class="form-pair"><label>Amount<div class="money-input"><span>$</span><input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required></div></label><label>Paid by<select name="payer"><option>You</option><option>Maya Chen</option><option>Jamie Lee</option><option>Chris Park</option></select></label></div><label>Trip<select name="trip"><option>Coastal California</option><option>New York weekend</option><option>Cabin in the woods</option></select></label><label>Split between<div class="split-people"><span class="avatar avatar-you">A</span><span class="avatar ava-maya">M</span><span class="avatar ava-jamie">J</span><span class="avatar ava-chris">C</span><span class="split-copy">4 people, equally <span>⌄</span></span></div></label><button class="primary-button form-submit" type="submit">Add expense <span>→</span></button></form></section></div>
+  <script src="app.js"></script>
+</body>
+</html>
