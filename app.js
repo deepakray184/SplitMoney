@@ -1,9 +1,9 @@
 if (window.SplitMoneyCloud?.configured) {
-  import('./cloud-app.js').then(({ startCloudApp }) => startCloudApp()).catch(error => {
+  try { window.startCloudApp(); } catch (error) {
     console.error('Could not start SplitMoney cloud app', error);
     document.querySelector('#authMessage').textContent = 'Could not load the sign-in service. Refresh the page and try again.';
     document.querySelector('#authBackdrop').classList.add('open');
-  });
+  }
 } else {
 const DEFAULT_USER = 'Alex Morgan';
 const STORAGE_KEY = 'splitmoney.v1';

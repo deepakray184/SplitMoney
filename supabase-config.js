@@ -4,5 +4,6 @@
 window.SplitMoneyCloud = {
   url: 'https://yevxvvwncmlxobxuybes.supabase.co',
   anonKey: 'sb_publishable_aJCCf_EkD5nJHoXE2P_FeQ__Xmw19a2',
+  siteUrl: 'https://deepakray184.github.io/SplitMoney/',
   get configured() { return Boolean(this.url && this.anonKey); }
 };

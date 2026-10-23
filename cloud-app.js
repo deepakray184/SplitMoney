@@ -1,4 +1,4 @@
-export function startCloudApp() {
+window.startCloudApp = function startCloudApp() {
   const config = window.SplitMoneyCloud;
   const client = window.supabase.createClient(config.url, config.anonKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -43,11 +43,11 @@ export function startCloudApp() {
     try {
       const result = signIn
         ? await client.auth.signInWithPassword({ email: form.get('email').trim(), password: form.get('password') })
-        : await client.auth.signUp({ email: form.get('email').trim(), password: form.get('password'), options: { data: { display_name: form.get('displayName').trim() }, emailRedirectTo: location.origin + location.pathname + location.search } });
+        : await client.auth.signUp({ email: form.get('email').trim(), password: form.get('password'), options: { data: { display_name: form.get('displayName').trim() }, emailRedirectTo: config.siteUrl } });
       if (result.error) throw result.error;
       if (!signIn && !result.data.session) {
-        $('#authMessage').textContent = 'Check your email to confirm your account, then return here to sign in and join the group.';
         setAuthMode(true);
+        $('#authMessage').textContent = 'Account created. Check your email to confirm it, then sign in here.';
         return;
       }
       if (result.data.session) await activate(result.data.session);
@@ -195,4 +195,4 @@ export function startCloudApp() {
     if (event === 'SIGNED_IN' && session && !user) setTimeout(() => activate(session), 0);
   });
   client.auth.getSession().then(({ data }) => { if (data.session) activate(data.session); else setAuthMode(false); });
-}
+};
