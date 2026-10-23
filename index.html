@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=friends-1" />
+  <link rel="stylesheet" href="styles.css?v=auth-tab-1" />
 </head>
 <body>
   <div class="app-shell">
@@ -28,7 +28,7 @@
     </aside>
 
     <main class="main-content">
-      <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <b id="crumbCurrent">Overview</b></div><div class="top-actions"><button class="account-access" id="accountAccess">Sign up / sign in</button><button class="icon-button" id="searchButton" aria-label="Search">⌕</button><button class="icon-button notification" aria-label="Notifications">♧<i></i></button><button class="avatar avatar-you top-avatar" id="topAvatar">A</button></div></header>
+      <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <b id="crumbCurrent">Overview</b></div><div class="top-actions"><a class="account-access" id="accountAccess" href="?auth=1" target="_blank" rel="noopener">Sign up / sign in ↗</a><button class="icon-button" id="searchButton" aria-label="Search">⌕</button><button class="icon-button notification" aria-label="Notifications">♧<i></i></button><button class="avatar avatar-you top-avatar" id="topAvatar">A</button></div></header>
       <div class="page-wrap">
         <section class="welcome-row"><div><div class="eyebrow"><span class="live-dot"></span> SHARED EXPENSES, MADE SIMPLE</div><h1>Hey <span id="welcomeName">Alex</span> <span class="wave">✳</span></h1><p class="subtitle">Create a group, invite friends, and split expenses together.</p></div><button class="primary-button" id="addExpenseTop"><span>＋</span> Add an expense</button></section>
 
@@ -59,7 +59,7 @@
   <div class="modal-backdrop" id="groupModalBackdrop" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="groupModalTitle"><button class="modal-close" id="groupModalClose" aria-label="Close">×</button><div class="modal-mark">♧</div><h2 id="groupModalTitle">Create a group</h2><p class="modal-subtitle">Start a trip group and add the friends sharing expenses.</p><form id="groupForm"><label>Group name<input name="groupName" placeholder="e.g. Goa weekend" required maxlength="50"></label><label>Friends to add<input name="members" placeholder="Names, separated by commas" required></label><p class="form-hint">You’re included automatically. Groups are saved in this browser.</p><button class="primary-button form-submit" type="submit">Create group <span>→</span></button></form></section></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="cloud-app.js?v=friends-1"></script>
-  <script src="app.js?v=friends-1"></script>
+  <script src="cloud-app.js?v=auth-tab-1"></script>
+  <script src="app.js?v=auth-tab-1"></script>
 </body>
 </html>

@@ -9,13 +9,15 @@ window.startCloudApp = function startCloudApp() {
   const initials = name => String(name || '?').split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
   let user, profile, groups = [], expenses = [], friends = [], selectedGroup = null, signIn = false, toastTimer, joinedInvite = false, activatedUser = null;
   const inviteToken = new URL(location.href).searchParams.get('invite');
+  let authPage = new URL(location.href).searchParams.get('auth') === '1' || Boolean(inviteToken);
+  if (authPage) document.body.classList.add('auth-page');
   $('#friendsField')?.remove();
   document.querySelector('#groupForm label:nth-of-type(2)').hidden = true;
   $('#groupForm').elements.members.required = false;
-  $('#accountAccess').hidden = true;
+  $('#accountAccess').hidden = authPage;
   document.querySelector('#groupForm .form-hint').textContent = 'Invite links let friends join this group from any device.';
-  $('#authBackdrop').classList.add('open');
-  $('#authBackdrop').setAttribute('aria-hidden', 'false');
+  $('#authBackdrop').classList.toggle('open', authPage);
+  $('#authBackdrop').setAttribute('aria-hidden', String(!authPage));
   if (inviteToken) $('#inviteNotice').textContent = 'You were invited to join a trip group. Sign in or create an account to accept.';
   $('#inviteNotice').hidden = !inviteToken;
 
@@ -34,6 +36,11 @@ window.startCloudApp = function startCloudApp() {
     $('#authToggle').textContent = signIn ? 'New to SplitMoney? Create an account' : 'Already have an account? Sign in';
     $('#authMessage').textContent = '';
   }
+  $('#accountAccess').addEventListener('click', event => {
+    event.preventDefault();
+    const authUrl = new URL(location.href); authUrl.searchParams.set('auth', '1'); authUrl.hash = '';
+    window.open(authUrl.toString(), '_blank', 'noopener');
+  });
   $('#authToggle').addEventListener('click', () => setAuthMode(!signIn));
   $('#authForm').addEventListener('submit', async event => {
     event.preventDefault();
@@ -186,7 +193,7 @@ window.startCloudApp = function startCloudApp() {
     const memberNames = Object.fromEntries(groups.flatMap(g => g.members.map(m => [m.id, m.name])));
     const emptyState = $('#emptyState'); $('#activityList').replaceChildren(emptyState); $('#allCount').textContent = expenses.length;
     expenses.forEach(e => { const g = groups.find(item => item.id === e.group_id); if (!g) return; const share = e.expense_splits.find(s => s.user_id === user.id)?.cents || 0; const impact = e.payer_id === user.id ? e.amount_cents - share : -share; const row = document.createElement('article'); row.className = 'activity-row'; row.dataset.kind = 'expenses'; row.innerHTML = `<div class="activity-icon ticket">✳</div><div class="activity-detail"><b>${safe(e.description)}</b><span><strong>${safe(memberNames[e.payer_id] || 'Group member')}</strong> paid <span class="group-tag">${safe(g.name)}</span></span></div><div class="activity-amount"><b>${dollars(e.amount_cents)}</b><span>${impact > 0 ? `You lent <em>${dollars(impact)}</em>` : impact < 0 ? `You owe <em>${dollars(-impact)}</em>` : 'Your share is covered'}</span></div>`; $('#activityList').append(row); });
-    $('#emptyState').style.display = expenses.length ? 'none' : 'block'; $('#loadMore').style.display = expenses.length ? 'block' : 'none';
+    $('#emptyState').textContent = 'Add an expense to start splitting with your group.'; $('#emptyState').style.display = expenses.length ? 'none' : 'block'; $('#loadMore').style.display = expenses.length ? 'block' : 'none';
   }
   async function createInvite() {
     if (!selectedGroup) return toast('Create a group before inviting friends.');
@@ -201,21 +208,37 @@ window.startCloudApp = function startCloudApp() {
     if (activatedUser === user.id) return;
     activatedUser = user.id;
     const { error: profileError } = await client.rpc('ensure_my_profile');
-    if (profileError) { activatedUser = null; $('#authBackdrop').classList.add('open'); $('#authMessage').textContent = `Could not initialize your account: ${profileError.message}`; return; }
+    if (profileError) { activatedUser = null; const message = `Could not initialize your account: ${profileError.message}`; if (authPage) $('#authMessage').textContent = message; else toast(message); return; }
     if (inviteToken && !joinedInvite) {
       const { error } = await client.rpc('join_group_with_invite', { invite_token: inviteToken });
-      if (error) { activatedUser = null; $('#authBackdrop').classList.add('open'); $('#authMessage').textContent = `Could not join this group: ${error.message}`; return; }
+      if (error) { activatedUser = null; const message = `Could not join this group: ${error.message}`; if (authPage) $('#authMessage').textContent = message; else toast(message); return; }
       joinedInvite = true;
       const url = new URL(location.href); url.searchParams.delete('invite'); history.replaceState({}, '', url); toast('You joined the invited group.');
     }
     $('#authBackdrop').classList.remove('open'); $('#authBackdrop').setAttribute('aria-hidden', 'true');
+    if (authPage) {
+      authPage = false; document.body.classList.remove('auth-page'); $('#accountAccess').hidden = false;
+      const url = new URL(location.href); url.searchParams.delete('auth'); history.replaceState({}, '', url);
+    }
     await refresh();
     client.channel('splitmoney-changes').on('postgres_changes', { event: '*', schema: 'public' }, () => refresh()).subscribe();
     setInterval(() => { if (!document.hidden) refresh(); }, 20000);
   }
   client.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_OUT') { user = null; activatedUser = null; joinedInvite = false; groups = []; expenses = []; $('#authBackdrop').classList.add('open'); $('#authBackdrop').setAttribute('aria-hidden', 'false'); setAuthMode(true); }
+    if (event === 'SIGNED_OUT') { user = null; activatedUser = null; joinedInvite = false; groups = []; expenses = []; friends = []; $('#authBackdrop').classList.remove('open'); $('#authBackdrop').setAttribute('aria-hidden', 'true'); $('#accountAccess').hidden = false; renderSignedOut(); setAuthMode(false); }
     if (event === 'SIGNED_IN' && session && !user) setTimeout(() => activate(session), 0);
   });
+  renderSignedOut();
   client.auth.getSession().then(({ data }) => { if (data.session) activate(data.session); else setAuthMode(false); });
+  function renderSignedOut() {
+    $('#profileName').textContent = 'Guest'; $('#accountCaption').textContent = 'Sign in to sync';
+    $('#profileAvatar').textContent = '?'; $('#topAvatar').textContent = '?'; $('#welcomeName').textContent = 'there';
+    $('#tripList').replaceChildren(); $('#groupCount').textContent = '0';
+    $('#currentGroupName').textContent = 'No groups yet'; $('#balanceGroupName').textContent = 'Sign in to see your groups';
+    $('#currentGroupMembers').textContent = '0 people'; $('#currentGroupPeople').textContent = '0 people'; $('#groupPeopleCount').textContent = '0 people'; $('#currentGroupAvatars').replaceChildren();
+    $('#groupTotal').textContent = '$0.00'; $('#groupNet').textContent = 'Sign in to see balances'; $('#memberBalances').innerHTML = '<p class="balance-empty">Sign in to see your groups and friends.</p>';
+    $('#owedAmount').innerHTML = '$0<span>.00</span>'; $('#youOweAmount').innerHTML = '$0<span>.00</span>'; $('#owedGroups').textContent = '0 groups'; $('#oweGroups').textContent = '0 groups'; $('#owedFriends').textContent = '0 friends';
+    const emptyState = $('#emptyState'); $('#activityList').replaceChildren(emptyState); emptyState.textContent = 'Sign in to see your shared expenses.'; emptyState.style.display = 'block'; $('#allCount').textContent = '0'; $('#loadMore').style.display = 'none';
+    $('#friendsList').innerHTML = '<p class="balance-empty">Sign in to see your friends.</p>';
+  }
 };

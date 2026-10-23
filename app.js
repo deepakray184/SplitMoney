@@ -1,8 +1,9 @@
 if (window.SplitMoneyCloud?.configured) {
   try { window.startCloudApp(); } catch (error) {
     console.error('Could not start SplitMoney cloud app', error);
-    document.querySelector('#authMessage').textContent = 'Could not load the sign-in service. Refresh the page and try again.';
-    document.querySelector('#authBackdrop').classList.add('open');
+    const toast = document.querySelector('#toast');
+    toast.textContent = 'Could not load the app. Refresh the page and try again.';
+    toast.classList.add('show');
   }
 } else {
 const DEFAULT_USER = 'Alex Morgan';
@@ -25,21 +26,11 @@ const state = readState();
 let currentUser = state.userName || DEFAULT_USER;
 let activeFilter = 'all';
 let toastTimer;
-$('#accountAccess').addEventListener('click', () => {
-  $('#authTitle').textContent = 'Connect shared accounts';
-  $('#authSubtitle').textContent = 'This published preview currently stores data in this browser only.';
-  $('#authForm').hidden = true;
-  $('#authToggle').hidden = true;
-  $('#backendSetupInfo').hidden = false;
-  $('#authClose').hidden = false;
-  $('#authBackdrop').classList.add('open');
-  $('#authBackdrop').setAttribute('aria-hidden', 'false');
-});
+$('#accountAccess').hidden = true;
 $('#authClose').addEventListener('click', () => {
   $('#authBackdrop').classList.remove('open');
   $('#authBackdrop').setAttribute('aria-hidden', 'true');
 });
-$('#shareGroupInvite').addEventListener('click', () => $('#accountAccess').click());
 $('#authBackdrop').addEventListener('click', event => {
   if (event.target === $('#authBackdrop')) { $('#authClose').click(); }
 });
