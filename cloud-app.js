@@ -10,7 +10,11 @@ window.startCloudApp = function startCloudApp() {
   let user, profile, groups = [], expenses = [], friends = [], selectedGroup = null, signIn = false, toastTimer, joinedInvite = false, activatedUser = null;
   const inviteToken = new URL(location.href).searchParams.get('invite');
   let authPage = new URL(location.href).searchParams.get('auth') === '1' || Boolean(inviteToken);
-  if (authPage) document.body.classList.add('auth-page');
+  if (authPage) {
+    document.body.classList.add('auth-page');
+    const authPanel = $('#authBackdrop').querySelector('.modal');
+    authPanel.setAttribute('role', 'main'); authPanel.removeAttribute('aria-modal');
+  }
   $('#friendsField')?.remove();
   document.querySelector('#groupForm label:nth-of-type(2)').hidden = true;
   $('#groupForm').elements.members.required = false;
