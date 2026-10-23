@@ -145,3 +145,58 @@ grant execute on function public.create_trip_group(text) to authenticated;
 grant execute on function public.create_group_invite(uuid) to authenticated;
 grant execute on function public.join_group_with_invite(text) to authenticated;
 grant execute on function public.ensure_my_profile() to authenticated;
+
+-- Directly add existing SplitMoney users as friends without sharing a group invite.
+create table if not exists public.friendships (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  friend_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, friend_id),
+  check (user_id < friend_id)
+);
+alter table public.friendships enable row level security;
+revoke all on public.friendships from anon, authenticated;
+
+create or replace function public.add_friend_by_email(friend_email text, target_group uuid default null) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  target_user uuid;
+  target_name text;
+  actor uuid := auth.uid();
+  first_user uuid;
+  second_user uuid;
+begin
+  if actor is null then raise exception 'Sign in required'; end if;
+  select u.id, p.display_name into target_user, target_name
+  from auth.users u join public.profiles p on p.id = u.id
+  where lower(u.email) = lower(trim(friend_email)) and u.id <> actor and u.email_confirmed_at is not null
+  limit 1;
+  if target_user is null then raise exception 'No confirmed SplitMoney account was found for that email'; end if;
+
+  first_user := least(actor, target_user);
+  second_user := greatest(actor, target_user);
+  insert into public.friendships(user_id, friend_id) values (first_user, second_user)
+  on conflict (user_id, friend_id) do nothing;
+
+  if target_group is not null then
+    if not public.is_group_member(target_group, actor) then raise exception 'You must be a member of that group to add a friend'; end if;
+    insert into public.group_members(group_id, user_id, display_name)
+    values (target_group, target_user, target_name)
+    on conflict (group_id, user_id) do nothing;
+  end if;
+  return target_user;
+end; $$;
+
+create or replace function public.list_my_friends() returns table(friend_id uuid, display_name text)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.display_name
+  from public.friendships f
+  join public.profiles p on p.id = case when f.user_id = auth.uid() then f.friend_id else f.user_id end
+  where auth.uid() is not null and (f.user_id = auth.uid() or f.friend_id = auth.uid())
+  order by lower(p.display_name);
+$$;
+
+revoke all on function public.add_friend_by_email(text, uuid) from public, anon;
+revoke all on function public.list_my_friends() from public, anon;
+grant execute on function public.add_friend_by_email(text, uuid) to authenticated;
+grant execute on function public.list_my_friends() to authenticated;

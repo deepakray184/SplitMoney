@@ -7,7 +7,7 @@ window.startCloudApp = function startCloudApp() {
   const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
   const dollars = cents => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format((cents || 0) / 100);
   const initials = name => String(name || '?').split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
-  let user, profile, groups = [], expenses = [], selectedGroup = null, signIn = false, toastTimer, joinedInvite = false, activatedUser = null;
+  let user, profile, groups = [], expenses = [], friends = [], selectedGroup = null, signIn = false, toastTimer, joinedInvite = false, activatedUser = null;
   const inviteToken = new URL(location.href).searchParams.get('invite');
   $('#friendsField')?.remove();
   document.querySelector('#groupForm label:nth-of-type(2)').hidden = true;
@@ -60,6 +60,22 @@ window.startCloudApp = function startCloudApp() {
   });
   $('#inviteButton').addEventListener('click', () => document.querySelector('#addTrip').click());
   $('#shareGroupInvite').addEventListener('click', createInvite);
+  const openFriendModal = () => { $('#friendMessage').textContent = ''; $('#friendGroup').innerHTML = '<option value="">Friends list only</option>' + groups.map(g => `<option value="${safe(g.id)}">${safe(g.name)}</option>`).join(''); $('#friendGroup').value = selectedGroup || ''; $('#friendModalBackdrop').classList.add('open'); $('#friendModalBackdrop').setAttribute('aria-hidden', 'false'); };
+  const closeFriendModal = () => { $('#friendModalBackdrop').classList.remove('open'); $('#friendModalBackdrop').setAttribute('aria-hidden', 'true'); };
+  $('#addFriendButton').addEventListener('click', openFriendModal);
+  $('#friendModalClose').addEventListener('click', closeFriendModal);
+  $('#friendModalBackdrop').addEventListener('click', e => { if (e.target === $('#friendModalBackdrop')) closeFriendModal(); });
+  $('#friendForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget); const email = String(form.get('email')).trim();
+    const submit = event.currentTarget.querySelector('button[type="submit"]'); submit.disabled = true;
+    $('#friendMessage').textContent = 'Looking up account…';
+    const groupId = form.get('groupId') || null;
+    const { error } = await client.rpc('add_friend_by_email', { friend_email: email, target_group: groupId });
+    submit.disabled = false;
+    if (error) { $('#friendMessage').textContent = error.message; return; }
+    event.currentTarget.reset(); closeFriendModal(); await refresh(selectedGroup); toast(groupId ? 'Friend added to your friends list and group.' : 'Friend added. You can now add them to a trip group.');
+  });
   $('#inviteModalClose').addEventListener('click', closeInviteModal);
   $('#inviteModalBackdrop').addEventListener('click', e => { if (e.target === $('#inviteModalBackdrop')) closeInviteModal(); });
   $('#copyInviteLink').addEventListener('click', async () => {
@@ -104,9 +120,10 @@ window.startCloudApp = function startCloudApp() {
   });
   document.querySelectorAll('.nav-item').forEach(link => link.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item === link)); $('#crumbCurrent').textContent = link.textContent.trim();
+    if (link.dataset.view === 'friends') openFriendModal();
   }));
   $('#viewAll').addEventListener('click', () => document.querySelector('[data-filter="all"]').click());
-  document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeExpense(); closeGroupModal(); closeInviteModal(); } });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeExpense(); closeGroupModal(); closeInviteModal(); closeFriendModal(); } });
 
   function closeGroupModal() { $('#groupModalBackdrop').classList.remove('open'); $('#groupModalBackdrop').setAttribute('aria-hidden', 'true'); }
   function closeExpense() { $('#modalBackdrop').classList.remove('open'); $('#modalBackdrop').setAttribute('aria-hidden', 'true'); }
@@ -140,7 +157,13 @@ window.startCloudApp = function startCloudApp() {
       if (error) { toast(error.message); return; } expenses = rows || [];
     } else expenses = [];
     selectedGroup = groups.some(g => g.id === preferred) ? preferred : groups[0]?.id || null;
-    render();
+    render(); await refreshFriends();
+  }
+  async function refreshFriends() {
+    const { data, error } = await client.rpc('list_my_friends');
+    if (error) { $('#friendsList').innerHTML = '<p class="balance-empty">Could not load friends. Please refresh and try again.</p>'; return; }
+    friends = data || [];
+    $('#friendsList').innerHTML = friends.map((friend, i) => `<div class="balance-person"><span class="avatar avatar-member avatar-color-${i % 4}">${safe(initials(friend.display_name))}</span><span class="person-name"><b>${safe(friend.display_name)}</b><small>SplitMoney friend</small></span></div>`).join('') || '<p class="balance-empty">No friends added yet. Add a friend by email to get started.</p>';
   }
   function render() {
     profile = user.user_metadata?.display_name || user.email.split('@')[0];
