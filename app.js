@@ -1,3 +1,10 @@
+if (window.SplitMoneyCloud?.configured) {
+  import('./cloud-app.js').then(({ startCloudApp }) => startCloudApp()).catch(error => {
+    console.error('Could not start SplitMoney cloud app', error);
+    document.querySelector('#authMessage').textContent = 'Could not load the sign-in service. Refresh the page and try again.';
+    document.querySelector('#authBackdrop').classList.add('open');
+  });
+} else {
 const DEFAULT_USER = 'Alex Morgan';
 const STORAGE_KEY = 'splitmoney.v1';
 const DEFAULT_GROUPS = [
@@ -18,6 +25,24 @@ const state = readState();
 let currentUser = state.userName || DEFAULT_USER;
 let activeFilter = 'all';
 let toastTimer;
+$('#accountAccess').addEventListener('click', () => {
+  $('#authTitle').textContent = 'Connect shared accounts';
+  $('#authSubtitle').textContent = 'This published preview currently stores data in this browser only.';
+  $('#authForm').hidden = true;
+  $('#authToggle').hidden = true;
+  $('#backendSetupInfo').hidden = false;
+  $('#authClose').hidden = false;
+  $('#authBackdrop').classList.add('open');
+  $('#authBackdrop').setAttribute('aria-hidden', 'false');
+});
+$('#authClose').addEventListener('click', () => {
+  $('#authBackdrop').classList.remove('open');
+  $('#authBackdrop').setAttribute('aria-hidden', 'true');
+});
+$('#shareGroupInvite').addEventListener('click', () => $('#accountAccess').click());
+$('#authBackdrop').addEventListener('click', event => {
+  if (event.target === $('#authBackdrop')) { $('#authClose').click(); }
+});
 const $ = selector => document.querySelector(selector);
 const dollars = cents => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format((cents || 0) / 100);
 const safe = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -305,3 +330,4 @@ $('#searchButton').addEventListener('click', () => {
 });
 
 renderAll();
+}
