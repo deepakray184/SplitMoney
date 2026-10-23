@@ -177,6 +177,8 @@ export function startCloudApp() {
     user = session.user;
     if (activatedUser === user.id) return;
     activatedUser = user.id;
+    const { error: profileError } = await client.rpc('ensure_my_profile');
+    if (profileError) { activatedUser = null; $('#authBackdrop').classList.add('open'); $('#authMessage').textContent = `Could not initialize your account: ${profileError.message}`; return; }
     if (inviteToken && !joinedInvite) {
       const { error } = await client.rpc('join_group_with_invite', { invite_token: inviteToken });
       if (error) { activatedUser = null; $('#authBackdrop').classList.add('open'); $('#authMessage').textContent = `Could not join this group: ${error.message}`; return; }

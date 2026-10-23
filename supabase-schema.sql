@@ -55,10 +55,16 @@ end; $$;
 drop trigger if exists splitmoney_auth_user_created on auth.users;
 create trigger splitmoney_auth_user_created after insert on auth.users
 for each row execute procedure public.on_auth_user_created();
--- Also create profiles for accounts that existed before this schema was installed.
-insert into public.profiles(id, display_name)
-select id, coalesce(nullif(raw_user_meta_data->>'display_name', ''), split_part(email, '@', 1))
-from auth.users on conflict (id) do nothing;
+-- Existing auth users get a profile only when they sign in to SplitMoney.
+create or replace function public.ensure_my_profile() returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'Sign in required'; end if;
+  insert into public.profiles(id, display_name)
+  select id, coalesce(nullif(raw_user_meta_data->>'display_name', ''), split_part(email, '@', 1))
+  from auth.users where id = auth.uid()
+  on conflict (id) do nothing;
+end; $$;
 
 create or replace function public.create_trip_group(group_name text) returns uuid
 language plpgsql security definer set search_path = public as $$
@@ -114,9 +120,8 @@ $$;
 grant execute on function public.is_group_member(uuid, uuid) to authenticated;
 
 drop policy if exists "Profiles visible to signed-in users" on public.profiles;
-create policy "Profiles visible to signed-in users" on public.profiles for select to authenticated using (true);
 drop policy if exists "Users update their own profile" on public.profiles;
-create policy "Users update their own profile" on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+revoke all on public.profiles from anon, authenticated;
 drop policy if exists "Members read groups" on public.groups;
 create policy "Members read groups" on public.groups for select to authenticated using (public.is_group_member(id));
 drop policy if exists "Members read memberships" on public.group_members;
@@ -133,10 +138,10 @@ drop policy if exists "Members add splits" on public.expense_splits;
 create policy "Members add splits" on public.expense_splits for insert to authenticated with check (exists (select 1 from public.expenses e where e.id = expense_id and public.is_group_member(e.group_id, user_id)));
 
 grant usage on schema public to authenticated;
-grant select, update on public.profiles to authenticated;
 grant select on public.groups, public.group_members to authenticated;
 grant select, insert, delete on public.expenses to authenticated;
 grant select, insert on public.expense_splits to authenticated;
 grant execute on function public.create_trip_group(text) to authenticated;
 grant execute on function public.create_group_invite(uuid) to authenticated;
 grant execute on function public.join_group_with_invite(text) to authenticated;
+grant execute on function public.ensure_my_profile() to authenticated;
